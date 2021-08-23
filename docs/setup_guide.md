@@ -86,7 +86,7 @@ Once the transaction gets confirmed, you can start ruling disputed proposals fro
 
 ### Removing Gnosis Safe signers
 
-Last but not least, we have to remove the signers of the Safe, as they still have control over the multisig and some privileges over the SafeSnap module. Go again to https://rinkeby.gnosis-safe.io, go to "Settings" --> "Owners", and remove the owners of the multisig.
+Last but not least, we have to remove the signers of the Safe, as they still have control over the multisig and some privileges over the SafeSnap module. Go again to https://rinkeby.gnosis-safe.io, go to "Settings" --> "Owners", and remove all owners of the multisig except for yourself. It's not possible to have an ownerless Safe. For this reason, the remaining owner (you) has to be replaced by the SafeSnap address.
 
 ## Snapshot integration
 
