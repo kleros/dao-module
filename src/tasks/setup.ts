@@ -2,6 +2,9 @@ import "hardhat-deploy";
 import "@nomiclabs/hardhat-ethers";
 import { task, types } from "hardhat/config";
 import defaultTemplate from "./defaultTemplate.json";
+// const RealitioArbitratorProxy = require("./../../test/realitio-v-2-0-arbitrator-proxy.json");
+const RealitioArbitratorProxy = require("./../../test/realitio-v-2-1-arbitrator-proxy.json");
+const AutoAppealableArbitrator = require("./../../test/auto-appealable-arbitrator.json");
 
 task("setup", "Provides the clearing price to an auction")
     .addParam("dao", "Address of the DAO (e.g. Safe)", undefined, types.string)
@@ -12,7 +15,7 @@ task("setup", "Provides the clearing price to an auction")
         undefined, 
         types.string
     )
-    .addParam("timeout", "Timeout in seconds that should be required for the oracle", 48 * 3600, types.int, true)
+    .addParam("timeout", "Timeout in seconds that should be required for the oracle", 2 * 24 * 3600, types.int, true)
     .addParam("cooldown", "Cooldown in seconds that should be required after a oracle provided answer", 24 * 3600, types.int, true)
     .addParam("expiration", "Time duration in seconds for which a positive answer is valid. After this time the answer is expired", 7 * 24 * 3600, types.int, true)
     .addParam("bond", "Minimum bond that is required for an answer to be accepted", "0", types.string, true)
@@ -64,6 +67,35 @@ task("createDaoTemplate", "Creates a question template on the oracle address")
         const receipt = await oracle.createTemplate(taskArgs.template).then((tx: any) => tx.wait());
         const id = receipt.logs[0].topics[1]
         console.log("Template id:", id);
+    });
+
+
+task("deployArbitrator", "Deploy a centralized arbitrator along with a arbitration proxy to be used by Realitio.")
+    .addParam("arbitrationPrice", "Price of arbitration in WEI", 1000, types.int)
+    .addParam("oracle", "Address of the oracle (e.g. Realitio)", "0xa09ce5e7943f281a782a0dc021c4029f9088bec4", types.string)
+    .setAction(async (taskArgs, hardhatRuntime) => {
+        if (hardhatRuntime.network.name != "rinkeby") {
+            console.log("deployArbitrator is only meant for Rinkeby for testing purposes.");
+            console.log("If you want to deploy the DAO module to mainnet, skip this task and just run setup.");
+            return;
+        }
+        const [caller] = await hardhatRuntime.ethers.getSigners();
+        console.log("Using the account:", caller.address);
+
+        const autoAppealableArbitrator = await hardhatRuntime.ethers.getContractFactory(AutoAppealableArbitrator.abi, AutoAppealableArbitrator.bytecode);
+        const arbitrator = await autoAppealableArbitrator.deploy(taskArgs.arbitrationPrice);
+
+        const metadata = "{\"tos\": , \"template_hashes\": }";
+        const metaEvidence = "https://ipfs.kleros.io/ipfs/QmNTzBFMZzCosWCRXFWGxjNvaECwWUQtQsq3iWjAHmo7M5/metaEvidence.json";
+
+        const realitioArbitratorProxy = await hardhatRuntime.ethers.getContractFactory(RealitioArbitratorProxy.abi, RealitioArbitratorProxy.bytecode);
+        const arbitrationProxy = await realitioArbitratorProxy.deploy(taskArgs.realitio, metadata, arbitrator.address, 0x0, metaEvidence);
+
+        console.log();
+        console.log("Arbitration proxy (Realitio's arbitrator) deployed to:", arbitrationProxy.address);
+        console.log("Centralized arbitrator deployed to:", arbitrator.address);
+        console.log("To use centralized arbitrator go to https://centralizedarbitrator.netlify.app/");
+        console.log("Set the DAO module arbitrator to the arbitration proxy address.");
     });
 
 

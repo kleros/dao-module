@@ -10,7 +10,7 @@ To start the process you need to create a Safe on the Rinkeby test network (e.g.
 
 For the hardhat tasks to work the environment needs to be properly configured. See the [sample env file](../.env.sample) for more information.
 
-The guide will use the Rinkeby ETH Realitio contract at [`0x3D00D77ee771405628a4bA4913175EcC095538da`](https://rinkeby.etherscan.io/address/0x3D00D77ee771405628a4bA4913175EcC095538da#code). Other network addresses can be found in the truffle build folder on the [Realitio GitHub repo](https://github.com/realitio/realitio-contracts). E.g. on mainnet the ETH Realitio contract can be found at [`0x325a2e0f3cca2ddbaebb4dfc38df8d19ca165b47`](https://etherscan.io/address/0x325a2e0f3cca2ddbaebb4dfc38df8d19ca165b47#code).
+The guide will use the Rinkeby ETH Realitio v2.1 contract at [`0xa09ce5e7943f281a782a0dc021c4029f9088bec4`](https://rinkeby.etherscan.io/address/0xa09ce5e7943f281a782a0dc021c4029f9088bec4#code). Other network addresses can be found in the truffle build folder on the [Realitio GitHub repo](https://github.com/realitio/realitio-contracts). E.g. on mainnet the ETH Realitio contract can be found at [`0x325a2e0f3cca2ddbaebb4dfc38df8d19ca165b47`](https://etherscan.io/address/0x325a2e0f3cca2ddbaebb4dfc38df8d19ca165b47#code).
 
 DISCLAIMER: Check the deployed Realitio contracts before using them.
 
@@ -46,7 +46,7 @@ The template should have the following format:
 Using this template you can run the task by using `yarn hardhat --network <network> createDaoTemplate --oracle <oracle address> --template <your template json>` and this should provide you with a template id.
 
 An example for this on Rinkeby would be (using the default template):
-`yarn hardhat --network rinkeby createDaoTemplate ---oracle 0x3D00D77ee771405628a4bA4913175EcC095538da`
+`yarn hardhat --network rinkeby createDaoTemplate ---oracle 0xa09ce5e7943f281a782a0dc021c4029f9088bec4`
 
 For this guide we will assume that the returned template id is `0x0000000000000000000000000000000000000000000000000000000000000dad`
 
@@ -55,22 +55,49 @@ For this guide we will assume that the returned template id is `0x00000000000000
 Now that we have a template, a hardhat task can be used to deploy a DAO module instance. This setup task requires the following parameters: `dao` (the address of the Safe), `oracle` (the address of the Realitio contract) and `template` (the template to be used with Realitio). There are also optional parameters, for more information run `yarn hardhat setup --help`.
 
 An example for this on Rinkeby would be:
-`yarn hardhat --network rinkeby setup --dao <safe_address> --oracle 0x3D00D77ee771405628a4bA4913175EcC095538da --template 0x0000000000000000000000000000000000000000000000000000000000000dad`
+`yarn hardhat --network rinkeby setup --dao <safe_address> --oracle 0xa09ce5e7943f281a782a0dc021c4029f9088bec4 --template 0x0000000000000000000000000000000000000000000000000000000000000dad`
 
 This should return the address of the deployed DAO module. For this guide we assume this to be `0x4242424242424242424242424242424242424242`
 
 Once the module is deployed you should verify the source code. If you use a network that is Etherscan compatible and you configure the `ETHERSCAN_API_KEY` in your environment you can use the provided hardhat task to do this. 
 
 An example for this on Rinkeby would be:
-`yarn hardhat --network rinkeby verifyEtherscan --module 0x4242424242424242424242424242424242424242 --dao <safe_address> --oracle 0x3D00D77ee771405628a4bA4913175EcC095538da --template 0x0000000000000000000000000000000000000000000000000000000000000dad`
+`yarn hardhat --network rinkeby verifyEtherscan --module 0x4242424242424242424242424242424242424242 --dao <safe_address> --oracle 0xa09ce5e7943f281a782a0dc021c4029f9088bec4 --template 0x0000000000000000000000000000000000000000000000000000000000000dad`
 
 ### Enabling the module
 
 To allow the DAO module to actually execute transaction it is required to enable it on the Safe that it is connected to. For this it is possible to use the Transaction Builder on https://rinkeby.gnosis-safe.io. For this you can follow our tutorial on [adding a module](https://help.gnosis-safe.io/en/articles/4934427-add-a-module).
 
+### Setting the module's arbitrator
+
+By default, the arbitrator to which Realitio sends disputed proposal is the Safe's multisig itself. Of course this goes against the spirit of decentralized governance, but it could be useful during setup and the early days of the DAO. Eventually, the ruling power should be given to an impartial third party, a.k.a. Kleros.
+
+For testing purposes, we recommend to start using a centralized arbitrator, fully controled by the deployer address. To deploy a centralize abritrator together with a proxy contract that connects Realitio with the arbitrator, run:
+
+`yarn hardhat --network rinkeby deployArbitrator --oracle 0xa09ce5e7943f281a782a0dc021c4029f9088bec4`
+
+Now go to https://rinkeby.gnosis-safe.io and create a "New Transaction" to interact with the SafeSnap contract. Complete the data as following:
+
+- Contract address: address of the SafeSnap module (for example `0x4242424242424242424242424242424242424242`).
+- From the dropdown choose `setArbitrator`.
+- arbitrator (address): paste the address of the arbitrator contract deployed in the previous step.
+
+Once the transaction gets confirmed, you can start ruling disputed proposals from https://centralizedarbitrator.netlify.app/.
+
+### Removing Gnosis Safe signers
+
+Last but not least, we have to remove the signers of the Safe, as they still have control over the multisig and some privileges over the SafeSnap module. Go again to https://rinkeby.gnosis-safe.io and, from the "Address book" tab, remove all addresses except for the address that belongs to the SafeSnap module contract.
+
 ## Snapshot integration
 
-Once the module is setup it is possible to configure a space on [Snapshot](https://snapshot.org/) to enable the DAO module plugin. For this the space configuration needs to include `"plugins": { "daoModule": { "address": "<module_address>"} }`. An example for this can be found in the [🍯DAO space configuration](https://cloudflare-ipfs.com/ipfs/QmahDCSkdED9BLZ3VtH6aJ8P5TmvMYEfA7fJa4hGsvEpi2/).
+Once the module is setup it is possible to configure a space on [Snapshot](https://snapshot.org/) to enable the SafeSnap plugin. For this the space settings needs to include the SafeSnap plugin with this configuration: 
+```
+{
+  "address": "<module_address>"
+}
+```
+. 
+An example for this can be found in the [🍯DAO space configuration](https://cloudflare-ipfs.com/ipfs/QmahDCSkdED9BLZ3VtH6aJ8P5TmvMYEfA7fJa4hGsvEpi2/).
 
 Once your space is configured you can attach transactions to you proposals via the plugin section:
 
@@ -79,7 +106,7 @@ Once your space is configured you can attach transactions to you proposals via t
 ![Open the plugin selection](./snapshot_plugin_section.png)
 
 
-2. Add DAO module plugin
+2. Add SafeSnap plugin
 
 ![Add DAO module plugin](./snapshot_add_plugin.png)
 
