@@ -72,7 +72,7 @@ To allow the DAO module to actually execute transaction it is required to enable
 
 By default, the arbitrator to which Realitio sends disputed proposal is the Safe's multisig itself. Of course this goes against the spirit of decentralized governance, but it could be useful during setup and the early days of the DAO. Eventually, the ruling power should be given to an impartial third party, a.k.a. Kleros.
 
-For testing purposes, we recommend to start using a centralized arbitrator, fully controled by the deployer address. To deploy a centralize abritrator together with a proxy contract that connects Realitio with the arbitrator, run:
+For testing purposes, we recommend to start using a centralized arbitrator, fully controled by the deployer address. To deploy a centralized abritrator together with a proxy contract that connects Realitio with the arbitrator, run:
 
 `yarn hardhat --network rinkeby deployArbitrator --oracle 0xa09ce5e7943f281a782a0dc021c4029f9088bec4`
 
@@ -86,7 +86,7 @@ Once the transaction gets confirmed, you can start ruling disputed proposals fro
 
 ### Removing Gnosis Safe signers
 
-Last but not least, we have to remove the signers of the Safe, as they still have control over the multisig and some privileges over the SafeSnap module. Go again to https://rinkeby.gnosis-safe.io and, from the "Address book" tab, remove all addresses except for the address that belongs to the SafeSnap module contract.
+Last but not least, we have to remove the signers of the Safe, as they still have control over the multisig and some privileges over the SafeSnap module. Go again to https://rinkeby.gnosis-safe.io, go to "Settings" --> "Owners", and remove the owners of the multisig.
 
 ## Snapshot integration
 
