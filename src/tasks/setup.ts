@@ -89,7 +89,7 @@ task("deployArbitrator", "Deploy a centralized arbitrator along with a arbitrati
         const metaEvidence = "https://ipfs.kleros.io/ipfs/QmNTzBFMZzCosWCRXFWGxjNvaECwWUQtQsq3iWjAHmo7M5/metaEvidence.json";
 
         const realitioArbitratorProxy = await hardhatRuntime.ethers.getContractFactory(RealitioArbitratorProxy.abi, RealitioArbitratorProxy.bytecode);
-        const arbitrationProxy = await realitioArbitratorProxy.deploy(taskArgs.realitio, metadata, arbitrator.address, 0x0, metaEvidence);
+        const arbitrationProxy = await realitioArbitratorProxy.deploy(taskArgs.oracle, metadata, arbitrator.address, 0x0, metaEvidence);
 
         console.log();
         console.log("Arbitration proxy (Realitio's arbitrator) deployed to:", arbitrationProxy.address);
