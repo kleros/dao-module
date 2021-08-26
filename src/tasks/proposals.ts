@@ -4,6 +4,8 @@ import { Contract } from "ethers";
 import { task, types } from "hardhat/config";
 import { readFileSync } from "fs";
 
+const RealitioArbitratorProxy = require("./../../test/realitio-v-2-1-arbitrator-proxy.json");
+
 interface Proposal {
     id: string,
     txs: ModuleTransaction[]
@@ -85,4 +87,19 @@ task("executeProposal", "Executes a proposal")
             }
         });
 
+
+task("raiseDispute", "Requests arbitration for given question.")
+        .addParam("proxy", "Address of the realitio-kleros arbitration proxy", undefined, types.string)
+        .addParam("questionid", "Question id in realitio", undefined, types.string)
+        .addParam("maxprevious", "If specified, reverts if a bond higher than this was submitted after you sent your transaction.", 0, types.int)
+        .setAction(async (taskArgs, hardhatRuntime) => {
+            const ethers = hardhatRuntime.ethers;
+            const realitioArbitratorProxy = await ethers.getContractFactory(RealitioArbitratorProxy.abi, RealitioArbitratorProxy.bytecode);
+            const arbitrationProxy = await realitioArbitratorProxy.attach(taskArgs.proxy);
+
+            const arbitrationCost = await arbitrationProxy.getDisputeFee(taskArgs.questionid);
+            await arbitrationProxy.requestArbitration(taskArgs.questionid, taskArgs.maxprevious, {
+                value: arbitrationCost
+            });
+        });
 export { };
