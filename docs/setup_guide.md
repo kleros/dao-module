@@ -52,17 +52,17 @@ For this guide we will assume that the returned template id is `0x00000000000000
 
 ### Deploying the module
 
-Now that we have a template, a hardhat task can be used to deploy a DAO module instance. This setup task requires the following parameters: `dao` (the address of the Safe), `oracle` (the address of the Realitio contract) and `template` (the template to be used with Realitio). There are also optional parameters, for more information run `yarn hardhat setup --help`. In order to test the whole process conveniently, we are going to set cooldown to a low value. This means that we won't have to wait to execute the proposal once the oracle/kleros got a final answer.
+Now that we have a template, a hardhat task can be used to deploy a DAO module instance. This setup task requires the following parameters: `dao` (the address of the Safe), `oracle` (the address of the Realitio contract) and `template` (the template to be used with Realitio). There are also optional parameters, for more information run `yarn hardhat setup --help`. In order to test the whole process conveniently, we are going to set the cooldown parameter to a low value. This means that we won't have to wait to execute the proposal once the oracle/kleros got a final answer.
 
 An example for this on Rinkeby would be:
-`yarn hardhat --network rinkeby setup --dao <safe_address> --oracle 0xa09ce5e7943f281a782a0dc021c4029f9088bec4 --template 0x0000000000000000000000000000000000000000000000000000000000000dad --cooldown 60`
+`yarn hardhat --network rinkeby setup --dao <safe_address> --oracle 0xa09ce5e7943f281a782a0dc021c4029f9088bec4 --template 0x0000000000000000000000000000000000000000000000000000000000000dad --cooldown 30`
 
 This should return the address of the deployed DAO module. For this guide we assume this to be `0x4242424242424242424242424242424242424242`
 
 Once the module is deployed you should verify the source code. If you use a network that is Etherscan compatible and you configure the `ETHERSCAN_API_KEY` in your environment you can use the provided hardhat task to do this. 
 
 An example for this on Rinkeby would be:
-`yarn hardhat --network rinkeby verifyEtherscan --module 0x4242424242424242424242424242424242424242 --dao <safe_address> --oracle 0xa09ce5e7943f281a782a0dc021c4029f9088bec4 --template 0x0000000000000000000000000000000000000000000000000000000000000dad`
+`yarn hardhat --network rinkeby verifyEtherscan --module 0x4242424242424242424242424242424242424242 --dao <safe_address> --oracle 0xa09ce5e7943f281a782a0dc021c4029f9088bec4 --template 0x0000000000000000000000000000000000000000000000000000000000000dad --cooldown 30`
 
 ### Enabling the module
 
@@ -70,7 +70,7 @@ To allow the DAO module to actually execute transaction it is required to enable
 
 ### Setting the module's arbitrator
 
-By default, the arbitrator to which Realitio sends disputed proposal is the Safe's multisig itself. Of course this goes against the spirit of decentralized governance, but it could be useful during setup and the early days of the DAO. Eventually, the ruling power should be given to an impartial third party, a.k.a. Kleros.
+By default, the arbitrator to which Realitio sends disputed proposals is the Safe's multisig itself. Of course this goes against the spirit of decentralized governance, but it could be useful during setup and the early days of the DAO. Eventually, the ruling power should be given to an impartial third party, a.k.a. Kleros.
 
 For testing purposes, we recommend to start using a centralized arbitrator, fully controled by the deployer address. To deploy a centralized abritrator together with a proxy contract that connects Realitio with the arbitrator, run:
 
@@ -80,13 +80,13 @@ Now go to https://rinkeby.gnosis-safe.io and create a "New Transaction" to inter
 
 - Contract address: address of the SafeSnap module (for example `0x4242424242424242424242424242424242424242`).
 - From the dropdown choose `setArbitrator`.
-- arbitrator (address): paste the address of the arbitrator **proxy** contract deployed in the previous step.
+- arbitrator (address): paste the address of the arbitration **proxy** contract deployed in the previous step.
 
 Once the transaction gets confirmed, you can start ruling disputed proposals from https://centralizedarbitrator.netlify.app/.
 
 ### Removing Gnosis Safe signers
 
-Last but not least, we have to remove the signers of the Safe, as they still have control over the multisig and some privileges over the SafeSnap module. Go again to https://rinkeby.gnosis-safe.io, go to "Settings" --> "Owners", and remove all owners of the multisig except for yourself. It's not possible to have an ownerless Safe. For this reason, the remaining owner (you) has to be replaced by the SafeSnap address.
+Last but not least, we have to remove the signers of the Safe, as they still have control over the multisig and some privileges over the SafeSnap module. Go again to https://rinkeby.gnosis-safe.io, go to "Settings" --> "Owners", and remove all owners of the multisig except for yourself. It's not possible to have an ownerless Safe. For this reason, the remaining owner (you) has to be replaced by the SafeSnap module address.
 
 ## Snapshot integration
 
@@ -131,6 +131,14 @@ Once the proposal has been resolved it is possible to submit the proposal to the
 This can also be done via the hardhat tasks provided in this repository. For more information run `yarn hardhat addProposal --help` or `yarn hardhat executeProposal --help`.
 
 Once the question is available it can be answered via the Realitio web interface (e.g. https://reality.eth.link/app/).
+
+## Testing Kleros arbitration
+
+In order to test proposal disputes resolved by Kleros, "Apply for arbitration" on [reality.eth.link](reality.eth.link) after posting an answer. This will raise a dispute that you can control with the [centralized arbitrator](https://centralizedarbitrator.netlify.app/). To use the centralized arbitrator "Select" the centralized arbitrator address deployed earlier. Expand the dispute item and unselect "Give an appealable ruling". Next, choose the arbitrator ruling (No, Yes, Refuse to Arbitrate). This last step resolves the dispute, which now we have to report to Realitio by running:
+
+`yarn hardhat --network rinkeby reportAnswer --module 0x4242424242424242424242424242424242424242 --proxy <arbitration_proxy_address> --oracle 0xa09ce5e7943f281a782a0dc021c4029f9088bec4`.
+
+If the proposal was approved, we can execute the proposal using `yarn hardhat executeProposal --help`
 
 ## Monitoring your module
 
