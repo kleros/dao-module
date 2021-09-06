@@ -5,6 +5,16 @@ interface Realitio {
 
     // mapping(bytes32 => Question) public questions;
 
+    event LogNewAnswer(
+        bytes32 answer,
+        bytes32 indexed question_id,
+        bytes32 history_hash,
+        address indexed user,
+        uint256 bond,
+        uint256 ts,
+        bool is_commitment
+    );
+
     /// @notice Ask a new question without a bounty and return the ID
     /// @dev Template data is only stored in the event logs, but its block number is kept in contract storage.
     /// @dev Calling without the token param will only work if there is no arbitrator-set question fee.
@@ -52,4 +62,13 @@ interface Realitio {
     /// @notice Returns the questions's content hash, identifying the question content
     /// @param question_id The ID of the question 
     function getContentHash(bytes32 question_id) external view returns (bytes32);
+
+    /// @notice Returns the history hash of the question 
+    /// @param question_id The ID of the question 
+    /// @dev Updated on each answer, then rewound as each is claimed
+    function getHistoryHash(bytes32 question_id) external view returns(bytes32);
+
+    /// @notice Returns the current best answer
+    /// @param question_id The ID of the question 
+    function getBestAnswer(bytes32 question_id) external view returns(bytes32);
 }

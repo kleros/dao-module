@@ -69,7 +69,6 @@ task("createDaoTemplate", "Creates a question template on the oracle address")
         console.log("Template id:", id);
     });
 
-
 task("deployArbitrator", "Deploy a centralized arbitrator along with a arbitration proxy to be used by Realitio.")
     .addParam("cost", "Price of arbitration in WEI", 1000, types.int)
     .addParam("oracle", "Address of the oracle (e.g. Realitio)", "0xa09ce5e7943f281a782a0dc021c4029f9088bec4", types.string)
@@ -86,7 +85,7 @@ task("deployArbitrator", "Deploy a centralized arbitrator along with a arbitrati
         const arbitrator = await autoAppealableArbitrator.deploy(taskArgs.cost);
 
         const metadata = "{\"tos\": , \"template_hashes\": }";
-        const metaEvidence = "https://ipfs.kleros.io/ipfs/QmNTzBFMZzCosWCRXFWGxjNvaECwWUQtQsq3iWjAHmo7M5/metaEvidence.json";
+        const metaEvidence = "https://ipfs.kleros.io/ipfs/QmbnMiaatT4tHR2kGDfMSKFU9886tZPkEF8XMuQoNqWnqu";
 
         const realitioArbitratorProxy = await hardhatRuntime.ethers.getContractFactory(RealitioArbitratorProxy.abi, RealitioArbitratorProxy.bytecode);
         const arbitrationProxy = await realitioArbitratorProxy.deploy(taskArgs.oracle, metadata, arbitrator.address, 0x0, metaEvidence);
@@ -97,6 +96,5 @@ task("deployArbitrator", "Deploy a centralized arbitrator along with a arbitrati
         console.log("To use centralized arbitrator go to https://centralizedarbitrator.netlify.app/");
         console.log("Set the DAO module arbitrator to the arbitration proxy address.");
     });
-
 
 export { };

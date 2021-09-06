@@ -52,10 +52,10 @@ For this guide we will assume that the returned template id is `0x00000000000000
 
 ### Deploying the module
 
-Now that we have a template, a hardhat task can be used to deploy a DAO module instance. This setup task requires the following parameters: `dao` (the address of the Safe), `oracle` (the address of the Realitio contract) and `template` (the template to be used with Realitio). There are also optional parameters, for more information run `yarn hardhat setup --help`.
+Now that we have a template, a hardhat task can be used to deploy a DAO module instance. This setup task requires the following parameters: `dao` (the address of the Safe), `oracle` (the address of the Realitio contract) and `template` (the template to be used with Realitio). There are also optional parameters, for more information run `yarn hardhat setup --help`. In order to test the whole process conveniently, we are going to set cooldown to a low value. This means that we won't have to wait to execute the proposal once the oracle/kleros got a final answer.
 
 An example for this on Rinkeby would be:
-`yarn hardhat --network rinkeby setup --dao <safe_address> --oracle 0xa09ce5e7943f281a782a0dc021c4029f9088bec4 --template 0x0000000000000000000000000000000000000000000000000000000000000dad`
+`yarn hardhat --network rinkeby setup --dao <safe_address> --oracle 0xa09ce5e7943f281a782a0dc021c4029f9088bec4 --template 0x0000000000000000000000000000000000000000000000000000000000000dad --cooldown 60`
 
 This should return the address of the deployed DAO module. For this guide we assume this to be `0x4242424242424242424242424242424242424242`
 
@@ -80,7 +80,7 @@ Now go to https://rinkeby.gnosis-safe.io and create a "New Transaction" to inter
 
 - Contract address: address of the SafeSnap module (for example `0x4242424242424242424242424242424242424242`).
 - From the dropdown choose `setArbitrator`.
-- arbitrator (address): paste the address of the arbitrator contract deployed in the previous step.
+- arbitrator (address): paste the address of the arbitrator **proxy** contract deployed in the previous step.
 
 Once the transaction gets confirmed, you can start ruling disputed proposals from https://centralizedarbitrator.netlify.app/.
 
