@@ -22,7 +22,7 @@ As part of the setup you need to define or choose a template on Realitio. More i
 
 ### Setup the Realitio template
 
-To define your own template a hardhat task is provided in the repository. It is possible to provide a template to that task via `--template` else the [default template](../src/tasks/defaultTemplate.json) is used.
+To define your own template a hardhat task is provided in the repository. It is possible to provide a template to that task via `--template` else the [default template](../src/tasks/defaultTemplate.json) is used. If the latter is chosen, replace `<snapshot-space>` in the title field accordingly.
 
 The template should have the following format:
 ```json
