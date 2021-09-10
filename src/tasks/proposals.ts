@@ -3,6 +3,10 @@ import "@nomiclabs/hardhat-ethers";
 import { Contract } from "ethers";
 import { task, types } from "hardhat/config";
 import { readFileSync } from "fs";
+const IPFS = require('ipfs-core');
+const all = require('it-all');
+const BufferList = require('bl/BufferList');
+const { GraphQLClient, gql } = require('graphql-request')
 
 const RealitioArbitratorProxy = require("./../../test/realitio-v-2-1-arbitrator-proxy.json");
 const AutoAppealableArbitrator = require("./../../test/auto-appealable-arbitrator.json");
@@ -153,6 +157,78 @@ task("executeRuling", "Requests arbitration for given question.")
             const arbitrator = await autoAppealableArbitrator.attach(taskArgs.arbitrator);
 
             await arbitrator.executeRuling(0);
+        });
+
+task("checkProposalHash", "Shows proposal quesion details")
+        .addParam("proposalid", "ID of the proposal.", undefined, types.string)
+        .setAction(async (taskArgs, hardhatRuntime) => {
+            const ethers = hardhatRuntime.ethers;
+
+            const ipfs = await IPFS.create()
+            const files = await all(ipfs.get(taskArgs.proposalid));
+            console.clear();
+
+            const content = new BufferList()
+            for await (const chunk of files) {
+                content.append(chunk)
+            }
+            const contentStr = content.toString();
+            const cleanedStr = contentStr.substring(contentStr.indexOf("{")).trim();
+            const nullChar = String.fromCharCode(0);
+            const proposalData = JSON.parse(JSON.parse(cleanedStr.split(nullChar).join("")).msg);
+
+            const pluginsData = proposalData.payload.metadata.plugins
+            let pluginName = "safeSnap";
+            let txsBatches;
+            if(!pluginsData.hasOwnProperty(pluginName)){
+                pluginName = "daoModule";
+                if(!pluginsData.hasOwnProperty(pluginName)){
+                    throw "Neither safeSnap nor daoModule plugin found in the proposal.";
+                }
+                txsBatches = [pluginsData[pluginName].txs];
+            } else {
+                txsBatches = pluginsData[pluginName].txs;
+            }
+
+            const graph = new GraphQLClient("https://hub.snapshot.org/graphql");
+            const spaceData = await graph.request(
+                gql`
+                    query getSpaceData($spaceID: String) {
+                        space(id: $spaceID) {
+                            plugins
+                        }
+                    }
+                `,
+                {
+                    spaceID: proposalData.space,
+                }
+            )
+            
+            if (spaceData.space.plugins.daoModule.address == null) {
+                throw "SafeSnap module address not found"
+            }
+            const Module = await ethers.getContractFactory("DaoModule");
+            const module = await Module.attach(spaceData.space.plugins.daoModule.address);
+
+            console.log()
+            console.log("### Proposal ####");
+            console.log("ID:", taskArgs.proposalid);
+            console.log()
+            for (let j = 0; j < txsBatches.length; j++) {
+                const txBatch = txsBatches[j];
+                const txsHashes = await Promise.all(txBatch.map(async (tx: ModuleTransaction, index: any) => {
+                    return await module.getTransactionHash(tx.to, tx.value, tx.data, tx.operation, index)
+                }));
+                
+                // const proposal;
+                const txHashesImages = ethers.utils.solidityPack(["bytes32[]"], [txsHashes]);
+                const txHashesHash = ethers.utils.keccak256(txHashesImages);
+    
+                console.log("Batch nr:", j+1);
+                console.log("Array of transactions hashes:", txsHashes);
+                console.log("Transactions array hash:", txHashesHash);
+                console.log();
+            }
         });
 
 export { };
