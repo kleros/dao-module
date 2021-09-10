@@ -4,6 +4,8 @@
 
 Clone this repository with `git clone <repository-url>` and install the dependencies with `yarn`.
 
+The script you will be running requires an Infura key. If you don't have an Infura account, it's possible to create one for free [here](https://infura.io/register?redirect=%2Fdashboard%2Fethereum). After signing up, create a project, go to Settings and copy the `PROJECT ID`.
+
 ## Check Proposal Hashes
 
 Go to the Snapshot space where the proposal was published. The URL of the proposal in the browser's address bar should be of the form `https://snapshot.org/#/<space-name>.eth/proposal/<proposal-id>`, similar to the example shown below.
@@ -12,9 +14,9 @@ Go to the Snapshot space where the proposal was published. The URL of the propos
 
 Copy and paste the proposal ID in the following command.
 
-`yarn hardhat --network <network> checkProposalHash --proposalid <proposalid>`
+`INFURA_KEY=<infura-key> yarn hardhat --network <network> checkProposalHash --proposalid <proposalid>`
 
-Then replace `<network>` with `mainnet` (or `rinkeby` if you are working on the testnet). Run it to get the transactions hash. You should see an output similar to:
+Then replace `<network>` with `mainnet` (or `rinkeby` if you are working on the testnet) and `infura-key` with your Infura's project ID. Run it to get the transactions hash. You should see an output similar to:
 
 ```
 ### Proposal ####
