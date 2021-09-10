@@ -204,11 +204,15 @@ task("checkProposalHash", "Shows proposal quesion details")
                 }
             )
             
-            if (spaceData.space.plugins.daoModule.address == null) {
-                throw "SafeSnap module address not found"
+            let moduleAddress = spaceData.space.plugins.daoModule.address;
+            if (moduleAddress == null) {
+                moduleAddress = spaceData.space.plugins.safeSnap.address;
+                if (moduleAddress == null) {
+                    throw "SafeSnap module address not found";
+                }
             }
             const Module = await ethers.getContractFactory("DaoModule");
-            const module = await Module.attach(spaceData.space.plugins.daoModule.address);
+            const module = await Module.attach(moduleAddress);
 
             console.log()
             console.log("### Proposal ####");
