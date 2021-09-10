@@ -2,7 +2,10 @@
 
 ## Setup
 
-Clone this repository with `git clone <repository-url>` and install the dependencies with `yarn`.
+- Clone this repository with `git clone <repository-url>`.
+- Enter the repo directory `cd dao-module`. 
+- Install the dependencies with `yarn`.
+- Compile the contracts with `yarn build`.
 
 The script you will be running requires an Infura key. If you don't have an Infura account, it's possible to create one for free [here](https://infura.io/register?redirect=%2Fdashboard%2Fethereum). After signing up, create a project, go to Settings and copy the `PROJECT ID`.
 
