@@ -2,7 +2,7 @@
 
 ## Setup
 
-Clone this reposiory with `git clone <repository-url>` and install the dependencies with `yarn`.
+Clone this repository with `git clone <repository-url>` and install the dependencies with `yarn`.
 
 ## Check Proposal Hashes
 

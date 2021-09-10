@@ -164,6 +164,7 @@ task("checkProposalHash", "Shows proposal quesion details")
         .setAction(async (taskArgs, hardhatRuntime) => {
             const ethers = hardhatRuntime.ethers;
 
+            // Fetch and parse proposal data from IPFS.
             const ipfs = await IPFS.create()
             const files = await all(ipfs.get(taskArgs.proposalid));
             console.clear();
@@ -177,6 +178,7 @@ task("checkProposalHash", "Shows proposal quesion details")
             const nullChar = String.fromCharCode(0);
             const proposalData = JSON.parse(JSON.parse(cleanedStr.split(nullChar).join("")).msg);
 
+            // Check if proposal has SafeSnap plugin and retrieve the transactions batches.
             const pluginsData = proposalData.payload.metadata.plugins
             let pluginName = "safeSnap";
             let txsBatches;
@@ -190,6 +192,7 @@ task("checkProposalHash", "Shows proposal quesion details")
                 txsBatches = pluginsData[pluginName].txs;
             }
 
+            // Fetch Snapshot's space data and look for the SafeSnap module address.
             const graph = new GraphQLClient("https://hub.snapshot.org/graphql");
             const spaceData = await graph.request(
                 gql`
@@ -214,6 +217,7 @@ task("checkProposalHash", "Shows proposal quesion details")
             const Module = await ethers.getContractFactory("DaoModule");
             const module = await Module.attach(moduleAddress);
 
+            // Calculate proposal hashes.
             console.log()
             console.log("### Proposal ####");
             console.log("ID:", taskArgs.proposalid);
