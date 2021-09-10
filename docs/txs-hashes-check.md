@@ -2,11 +2,11 @@
 
 ## Setup
 
-Clone this reposiory with `git clone <repository-url>` and install the dependecies with `yarn`.
+Clone this reposiory with `git clone <repository-url>` and install the dependencies with `yarn`.
 
 ## Check Proposal Hashes
 
-Go to the snapshot space where the proposal was published. The URL of the proposal in the browser's address bar should be of the form `https://snapshot.org/#/<space-name>.eth/proposal/<proposal-id>`, similar to the example shown below.
+Go to the Snapshot space where the proposal was published. The URL of the proposal in the browser's address bar should be of the form `https://snapshot.org/#/<space-name>.eth/proposal/<proposal-id>`, similar to the example shown below.
 
 ![](.././assets/get-proposal-id.png)
 
@@ -14,9 +14,7 @@ Copy and paste the proposal ID in the following command.
 
 `yarn hardhat --network <network> checkProposalHash --proposalid <proposalid>`
 
-Then replace `<network>` with `mainnet` (or `rinkeby` if you are working on the testnet)
-
-Run it to get the transactions hash. You should see an output similar to:
+Then replace `<network>` with `mainnet` (or `rinkeby` if you are working on the testnet). Run it to get the transactions hash. You should see an output similar to:
 
 ```
 ### Proposal ####
