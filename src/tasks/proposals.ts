@@ -209,28 +209,27 @@ task("checkProposalHash", "Shows proposal quesion details")
                     spaceID: proposalData.space,
                 }
             )
-            
-            let moduleAddress = spaceData.space.plugins.daoModule.address;
-            if (moduleAddress == null) {
-                moduleAddress = spaceData.space.plugins.safeSnap.address;
-                if (moduleAddress == null) {
-                    throw "SafeSnap module address not found";
+
+            pluginName = "safeSnap";
+            if(!spaceData.space.plugins.hasOwnProperty(pluginName)){
+                pluginName = "daoModule";
+                if(!spaceData.space.plugins.hasOwnProperty(pluginName)){
+                    throw "Neither safeSnap nor daoModule plugin found in the Snapshot space.";
                 }
             }
+            const moduleAddress = spaceData.space.plugins[pluginName].address;
+
             const Module = await ethers.getContractFactory("DaoModule");
             const module = await Module.attach(moduleAddress);
 
             const chainID = await module.getChainId();
             const dao = await hardhatRuntime.ethers.getContractAt("IGnosisSafe", await module.executor());
             const version = await dao.VERSION();
-            let multisendAddress;
+            let multiSendAddress;
             let multiSendInterface;
-            if (version == "1.1.1" || version == "1.0.0") {
-                multisendAddress = MultiSendV111.networkAddresses[chainID];
+            if (version == "1.1.1" || version == "1.0.0" || version == "1.2.0" || version == "1.3.0") {
+                multiSendAddress = MultiSendV111.networkAddresses[chainID];
                 multiSendInterface = new ethers.utils.Interface(MultiSendV111.abi);
-            } else if ((version == "1.2.0" || version == "1.3.0")) {
-                multisendAddress = MultiSendV130.networkAddresses[chainID];
-                multiSendInterface = new ethers.utils.Interface(MultiSendV130.abi);
             } else {
                 throw `Uknown Safe version ${version}`;
             }
@@ -258,7 +257,7 @@ task("checkProposalHash", "Shows proposal quesion details")
                     }).join("");
 
                     const multiSendTxData = multiSendInterface.encodeFunctionData("multiSend", [encodedMultiSend]);
-                    const txHash = await module.getTransactionHash(multisendAddress, 0, multiSendTxData, 1, j);
+                    const txHash = await module.getTransactionHash(multiSendAddress, 0, multiSendTxData, 1, j);
                     txsHashes.push(txHash);
                 }
             }
