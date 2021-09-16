@@ -3,6 +3,7 @@ import "@nomiclabs/hardhat-ethers";
 import { Contract } from "ethers";
 import { task, types } from "hardhat/config";
 import { readFileSync } from "fs";
+import { exit } from "yargs";
 const IPFS = require('ipfs-core');
 const all = require('it-all');
 const BufferList = require('bl/BufferList');
@@ -10,6 +11,8 @@ const { GraphQLClient, gql } = require('graphql-request')
 
 const RealitioArbitratorProxy = require("./../../test/realitio-v-2-1-arbitrator-proxy.json");
 const AutoAppealableArbitrator = require("./../../test/auto-appealable-arbitrator.json");
+const MultiSendV111 = require("./../../assets/v1.1.1/multi_send.json");
+const MultiSendV130 = require("./../../assets/v1.3.0/multi_send.json");
 
 interface Proposal {
     id: string,
@@ -115,7 +118,7 @@ task("reportAnswer", "Requests arbitration for given question.")
         .addParam(
             "template", 
             "Template that should be used for proposal questions (See https://github.com/realitio/realitio-dapp#structuring-and-fetching-information)", 
-            undefined, 
+            "", 
             types.string
         )
         .addParam("proposalFile", "File with proposal information json", "sample_proposal.json", types.inputFile)
@@ -217,26 +220,55 @@ task("checkProposalHash", "Shows proposal quesion details")
             const Module = await ethers.getContractFactory("DaoModule");
             const module = await Module.attach(moduleAddress);
 
+            const chainID = await module.getChainId();
+            const dao = await hardhatRuntime.ethers.getContractAt("IGnosisSafe", await module.executor());
+            const version = await dao.VERSION();
+            let multisendAddress;
+            let multiSendInterface;
+            if (version == "1.1.1" || version == "1.0.0") {
+                multisendAddress = MultiSendV111.networkAddresses[chainID];
+                multiSendInterface = new ethers.utils.Interface(MultiSendV111.abi);
+            } else if ((version == "1.2.0" || version == "1.3.0")) {
+                multisendAddress = MultiSendV130.networkAddresses[chainID];
+                multiSendInterface = new ethers.utils.Interface(MultiSendV130.abi);
+            } else {
+                throw `Uknown Safe version ${version}`;
+            }
+
             // Calculate proposal hashes.
-            console.log()
+            console.log();
             console.log("### Proposal ####");
             console.log("ID:", taskArgs.proposalid);
-            console.log()
+            console.log();
+            const txsHashes = new Array();
             for (let j = 0; j < txsBatches.length; j++) {
                 const txBatch = txsBatches[j];
-                const txsHashes = await Promise.all(txBatch.map(async (tx: ModuleTransaction, index: any) => {
-                    return await module.getTransactionHash(tx.to, tx.value, tx.data, tx.operation, index)
-                }));
-                
-                // const proposal;
-                const txHashesImages = ethers.utils.solidityPack(["bytes32[]"], [txsHashes]);
-                const txHashesHash = ethers.utils.keccak256(txHashesImages);
-    
-                console.log("Batch nr:", j+1);
-                console.log("Array of transactions hashes:", txsHashes);
-                console.log("Transactions array hash:", txHashesHash);
-                console.log();
+                if (txBatch.length == 1) {
+                    const tx = txBatch[0];
+                    const txHash = await module.getTransactionHash(tx.to, tx.value, tx.data, tx.operation, j);
+                    txsHashes.push(txHash);
+                } else {                    
+                    const encodedMultiSend = "0x" + txBatch.map((tx: any) => {
+                        const data = ethers.utils.arrayify(tx.data);
+                        const encoded = ethers.utils.solidityPack(
+                            ["uint8", "address", "uint256", "uint256", "bytes"],
+                            [tx.operation, tx.to, tx.value, data.length, data]
+                        );
+                        return encoded.slice(2);
+                    }).join("");
+
+                    const multiSendTxData = multiSendInterface.encodeFunctionData("multiSend", [encodedMultiSend]);
+                    const txHash = await module.getTransactionHash(multisendAddress, 0, multiSendTxData, 1, j);
+                    txsHashes.push(txHash);
+                }
             }
+
+            const txHashesImages = ethers.utils.solidityPack(["bytes32[]"], [txsHashes]);
+            const txHashesHash = ethers.utils.keccak256(txHashesImages);
+
+            console.log("Array of transactions hashes:", txsHashes);
+            console.log("Transactions array hash:", txHashesHash);
+            console.log();
         });
 
 export { };
