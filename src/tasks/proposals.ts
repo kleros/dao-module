@@ -192,7 +192,13 @@ task("checkProposalHash", "Shows proposal quesion details")
                 }
                 txsBatches = [pluginsData[pluginName].txs];
             } else {
-                txsBatches = pluginsData[pluginName].txs;
+                if(pluginsData[pluginName].hasOwnProperty("safes")){
+                    txsBatches = pluginsData[pluginName]["safes"][0].txs;
+                } else if (pluginsData[pluginName].hasOwnProperty("txs")) {
+                    txsBatches = pluginsData[pluginName].txs;
+                } else {
+                    throw "Unknown proposal format.";
+                }
             }
 
             // Fetch Snapshot's space data and look for the SafeSnap module address.
