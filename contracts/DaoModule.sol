@@ -40,6 +40,8 @@ contract DaoModule {
     );
 
     Executor public immutable executor;
+    Executor public avatar;
+    Executor public target;
     Realitio public immutable oracle;
     uint256 public template;
     uint32 public questionTimeout;

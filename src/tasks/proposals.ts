@@ -164,6 +164,7 @@ task("executeRuling", "Requests arbitration for given question.")
 
 task("checkProposalHash", "Shows proposal quesion details")
         .addParam("proposalid", "ID of the proposal.", undefined, types.string)
+        .addParam("zodiac", "ID of the proposal.", false, types.boolean)
         .setAction(async (taskArgs, hardhatRuntime) => {
             const ethers = hardhatRuntime.ethers;
 
@@ -227,9 +228,13 @@ task("checkProposalHash", "Shows proposal quesion details")
 
             const Module = await ethers.getContractFactory("DaoModule");
             const module = await Module.attach(moduleAddress);
-
             const chainID = await module.getChainId();
-            const dao = await hardhatRuntime.ethers.getContractAt("IGnosisSafe", await module.executor());
+            let dao;
+            if (taskArgs.zodiac) {
+                dao = await hardhatRuntime.ethers.getContractAt("IGnosisSafe", await module.avatar());
+            } else {
+                dao = await hardhatRuntime.ethers.getContractAt("IGnosisSafe", await module.executor());
+            }
             const version = await dao.VERSION();
             let multiSendAddress;
             let multiSendInterface;

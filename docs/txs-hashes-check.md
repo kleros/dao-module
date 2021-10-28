@@ -44,3 +44,9 @@ Transactions array hash: 0x219dc1a87f6d6031b219e3457d7162caec3f4256aad3506025361
 ```
 
 The `Transactions array hash` must match the one displayed on the Realitio question. If it doesn't match, it means that the transactions submitted to Realitio are not the ones voted on the Snapshot proposal.
+
+## Zodiac
+
+This tool uses the previous version of the Zodiac module, called DaoModule, and therefore will fail if you try to check a proposal which uses the new Zodiac. If that's the case, enable the zodiac parameter using `--zodiac true` when running the hash check command. It should look like so:
+
+`yarn hardhat --network <network> checkProposalHash --proposalid <proposalid> --zodiac true`
